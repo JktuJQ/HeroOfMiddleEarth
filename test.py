@@ -4,9 +4,18 @@ import pytmx
 
 WIDTH = 600
 HEIGHT = 400
+
 PLAYER_SPEED = 250
+MOB_SPEED = 200
+
+PLAYER_IMAGE = pygame.image.load('data/test_player.png')
+PLAYER_IMAGE.set_colorkey((255, 255, 255))
+MOB_IMAGE = pygame.image.load('data/test_player.png')
+MOB_IMAGE.set_colorkey((255, 255, 255))
+
 TILE_SIZE = 32
 FPS = 60
+
 MAP_WIDTH = 50
 MAP_HEIGHT = 50
 WINDOW_SIZE = (WIDTH, HEIGHT)
@@ -15,7 +24,7 @@ MAP_SIZE = (MAP_WIDTH * TILE_SIZE, MAP_HEIGHT * TILE_SIZE)
 
 class Map:
     def __init__(self, file):
-        self.tiled_map_data = pytmx.load_pygame(file)
+        self.tiled_map_data = pytmx.load_pygame(f'data/{file}')
 
     def full_map(self):
         full_map = pygame.Surface(MAP_SIZE)
@@ -53,9 +62,8 @@ class Camera:
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, x, y, game):
-        pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.image.load('test_player.png').convert()
-        self.image.set_colorkey((255, 255, 255))
+        pygame.sprite.Sprite.__init__(self, game.sprites)
+        self.image = PLAYER_IMAGE
 
         self.game = game
 
@@ -66,44 +74,110 @@ class Player(pygame.sprite.Sprite):
         self.x_speed = 0
         self.y_speed = 0
 
-    def move(self):
-        self.x += self.x_speed * self.game.tick
-        self.y += self.y_speed * self.game.tick
+    def collide(self, group):
         self.rect.x = self.x
-        self.collide('x')
-        self.rect.y = self.y
-        self.collide('y')
+        hits_list = pygame.sprite.spritecollide(self, group, False)
+        if hits_list:
+            if self.x_speed > 0:
+                self.x = hits_list[0].rect.left - self.rect.width
+            if self.x_speed < 0:
+                self.x = hits_list[0].rect.right
+            self.x_speed = 0
+            self.rect.x = self.x
 
-    def collide(self, direction):
-        if direction == 'x':
-            hits = pygame.sprite.spritecollide(self, self.game.obstacles, False)
-            if hits:
-                if self.x_speed > 0:
-                    self.x = hits[0].rect.left - self.rect.width
-                if self.x_speed < 0:
-                    self.x = hits[0].rect.right
-                self.x_speed = 0
-                self.rect.x = self.x
-        if direction == 'y':
-            hits = pygame.sprite.spritecollide(self, self.game.obstacles, False)
-            if hits:
-                if self.y_speed > 0:
-                    self.y = hits[0].rect.top - self.rect.height
-                if self.y_speed < 0:
-                    self.y = hits[0].rect.bottom
-                self.y_speed = 0
-                self.rect.y = self.y
+        self.rect.y = self.y
+        hits_list = pygame.sprite.spritecollide(self, group, False)
+        if hits_list:
+            if self.y_speed > 0:
+                self.y = hits_list[0].rect.top - self.rect.height
+            if self.y_speed < 0:
+                self.y = hits_list[0].rect.bottom
+            self.y_speed = 0
+            self.rect.y = self.y
+
+    def update(self):
+        self.x += self.x_speed * self.game.tick * 0.7
+        self.y += self.y_speed * self.game.tick * 0.7
+
+        self.collide(self.game.obstacles)
+
+        self.x_speed, self.y_speed = 0, 0
+
+
+class Mob(pygame.sprite.Sprite):
+    def __init__(self, x, y, game):
+        pygame.sprite.Sprite.__init__(self, game.sprites, game.mobs)
+        self.game = game
+        self.image = MOB_IMAGE
+        self.rect = self.image.get_rect()
+        self.rect.topleft = x, y
+
+        self.position = pygame.math.Vector2()
+        self.position.x, self.position.y = x, y
+
+        self.velocity = pygame.math.Vector2()
+        self.velocity.x, self.velocity.y = 0, 0
+        self.acceleration = pygame.math.Vector2()
+        self.acceleration.x, self.acceleration.y = 0, 0
+
+        self.rotation = 0
+        self.zero_degree_vector = pygame.math.Vector2()
+        self.zero_degree_vector.x, self.zero_degree_vector.y = 1, 0
+
+    def avoid(self):
+        for mob in self.game.mobs:
+            if mob != self:
+                shift = self.position - mob.rect.center
+                if 0 < shift.length() < max(mob.rect.width, mob.rect.height):
+                    self.acceleration += shift.normalize()
+
+    def collide(self, group):
+        self.rect.centerx = self.position.x
+        hits_list = pygame.sprite.spritecollide(self, group, False, lambda a, b: a.rect.colliderect(b.rect))
+        if hits_list:
+            if hits_list[0].rect.centerx > self.rect.centerx:
+                self.position.x = hits_list[0].rect.left - self.rect.width / 2
+            if hits_list[0].rect.centerx < self.rect.centerx:
+                self.position.x = hits_list[0].rect.right + self.rect.width / 2
+            self.velocity.x = 0
+            self.rect.centerx = self.position.x
+
+        self.rect.centery = self.position.y
+        hits_list = pygame.sprite.spritecollide(self, group, False, lambda a, b: a.rect.colliderect(b.rect))
+        if hits_list:
+            if hits_list[0].rect.centery > self.rect.centery:
+                self.position.y = hits_list[0].rect.top - self.rect.height / 2
+            if hits_list[0].rect.centery < self.rect.centery:
+                self.position.y = hits_list[0].rect.bottom + self.rect.height / 2
+            self.velocity.y = 0
+            self.rect.centery = self.position.y
+
+    def update(self):
+        try:
+            self.rect.center = self.position
+
+            self.rotation = (self.game.player.rect.topleft - self.position).angle_to(self.zero_degree_vector)
+
+            self.acceleration = self.zero_degree_vector.rotate(-self.rotation)
+            self.avoid()
+            self.acceleration.scale_to_length(MOB_SPEED)
+            self.acceleration -= self.velocity
+            self.velocity += self.acceleration * self.game.tick
+            self.position += self.velocity * self.game.tick
+
+            self.collide(self.game.obstacles)
+
+        except ValueError:
+            pass
 
 
 class Obstacle(pygame.sprite.Sprite):
     def __init__(self, x, y, width, height, game):
-        pygame.sprite.Sprite.__init__(self)
-        self.x = x
-        self.y = y
+        pygame.sprite.Sprite.__init__(self, game.obstacles)
         self.game = game
+
         self.rect = pygame.Rect(x, y, width, height)
-        self.rect.x = x
-        self.rect.y = y
+        self.rect.topleft = x, y
 
 
 class Game:
@@ -114,6 +188,10 @@ class Game:
         self.clock = pygame.time.Clock()
         self.tick = self.clock.tick(FPS) / 1000
         self.screen = pygame.display.set_mode(WINDOW_SIZE)
+
+        self.sprites = pygame.sprite.Group()
+        self.obstacles = pygame.sprite.Group()
+        self.mobs = pygame.sprite.Group()
 
     def load_map(self):
         self.map = Map('testMap.tmx')
@@ -127,25 +205,28 @@ class Game:
         pygame.display.flip()
 
     def setup(self):
-        self.sprites = pygame.sprite.Group()
-        self.obstacles = pygame.sprite.Group()
+        self.load_map()
         for object in self.map.tiled_map_data.objects:
             if object.name == 'Player':
                 self.player = Player(object.x, object.y, self)
             if object.name == 'Wall':
-                self.obstacles.add(Obstacle(object.x, object.y, object.width, object.height, self))
-        self.sprites.add(self.player)
+                Obstacle(object.x, object.y, object.width, object.height, self)
+            if object.name == 'Mob':
+                Mob(object.x, object.y, self)
         self.camera = Camera(MAP_SIZE[0], MAP_SIZE[1])
 
-    def run(self):
-        self.load_map()
-        self.setup()
+    def update(self):
+        self.sprites.update()
+        self.camera.update(self.player)
         self.render()
+
+    def run(self):
+        self.setup()
 
         running = True
         while running:
-            self.clock.tick(60)
-            self.player.x_speed, self.player.y_speed = 0, 0
+            self.clock.tick(FPS)
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
@@ -159,9 +240,7 @@ class Game:
             if pressed_keys[pygame.K_d]:
                 self.player.x_speed = PLAYER_SPEED
 
-            self.player.move()
-            self.camera.update(self.player)
-            self.render()
+            self.update()
 
         pygame.quit()
 
