@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.4" tiledversion="1.4.3" orientation="orthogonal" renderorder="right-down" width="50" height="50" tilewidth="32" tileheight="32" infinite="0" nextlayerid="5" nextobjectid="26">
+<map version="1.4" tiledversion="1.4.3" orientation="orthogonal" renderorder="right-down" width="50" height="50" tilewidth="32" tileheight="32" infinite="0" nextlayerid="5" nextobjectid="28">
  <tileset firstgid="1" source="RPG.tsx"/>
  <layer id="1" name="ground" width="50" height="50">
   <data encoding="csv">
@@ -187,5 +187,7 @@
   <object id="23" name="Wall" x="1599" y="0" width="1" height="1600"/>
   <object id="24" name="Wall" x="0" y="0" width="1" height="1600"/>
   <object id="25" name="Wall" x="0" y="1599" width="1600" height="1"/>
+  <object id="26" name="Mob" x="128" y="352" width="32" height="32"/>
+  <object id="27" name="Mob" x="320" y="160" width="32" height="32"/>
  </objectgroup>
 </map>
