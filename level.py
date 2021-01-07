@@ -37,6 +37,7 @@ class Game:
         self.sprites = pygame.sprite.Group()
         self.obstacles = pygame.sprite.Group()
         self.mobs = pygame.sprite.Group()
+        self.players = pygame.sprite.Group()
 
     def load_map(self):
         self.map = Map('testMap.tmx')

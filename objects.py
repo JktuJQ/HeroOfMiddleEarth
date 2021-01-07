@@ -3,10 +3,11 @@ from constants import *
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, x, y, game):
-        pygame.sprite.Sprite.__init__(self, game.sprites)
+        pygame.sprite.Sprite.__init__(self, game.sprites, game.players)
         self.image = PLAYER_IMAGE
 
         self.game = game
+        self.target_group = game.mobs
 
         self.rect = self.image.get_rect()
         self.health_points = PLAYER_HP
@@ -16,12 +17,12 @@ class Player(pygame.sprite.Sprite):
         self.x_speed = 0
         self.y_speed = 0
 
-        self.inventory = [Weapon('gun', self)]
+        self.inventory = [Weapon('gun', self.target_group, self)]
         self.current_weapon = self.inventory[0]
 
     def add_weapon(self, weapon_kind):
         if len(self.inventory) <= 8 and weapon_kind not in [weapon.kind for weapon in self.inventory]:
-            self.inventory.append(Weapon(weapon_kind, self))
+            self.inventory.append(Weapon(weapon_kind, self.target_group, self))
 
     def choose_weapon(self, index):
         if -1 < index < len(self.inventory):
@@ -69,27 +70,35 @@ class Player(pygame.sprite.Sprite):
 
 
 class Weapon:
-    def __init__(self, kind, player):
+    def __init__(self, kind, target_group, player):
+        from random import randrange
         self.kind = kind
         self.player = player
+        self.target_group = target_group
 
         self.cooldown = INVENTORY_PROP[kind]['cooldown']
         self.cooldown_tracker = 0
 
+        if type(player) == Mob:
+            self.cooldown *= 1.5
+            self.cooldown_tracker = randrange(self.cooldown)
+
     def attack(self, pos):
         if self.cooldown_tracker >= self.cooldown:
-            Bullet(self.player.rect.x + 15, self.player.rect.y + 15, pos[0], pos[1], self.kind, self)
+            Bullet(self.player.rect.x + 15, self.player.rect.y + 15, pos[0], pos[1],
+                   self.kind, self, self.target_group)
             self.cooldown_tracker = 0
 
 
 class Bullet(pygame.sprite.Sprite):
-    def __init__(self, x, y, x1, y1, kind, weapon):
+    def __init__(self, x, y, x1, y1, kind, weapon, target_group):
         import math
         import pyganim
         pygame.sprite.Sprite.__init__(self, weapon.player.game.sprites)
         self.style = INVENTORY_PROP[kind]['type of shooting']
         self.dist = INVENTORY_PROP[kind]['range']
         self.damage = INVENTORY_PROP[kind]['damage']
+        self.target_group = target_group
         self.y = y
         self.x = x
         self.weapon = weapon
@@ -131,7 +140,7 @@ class Bullet(pygame.sprite.Sprite):
                 self.rect.x = self.list_of_line_coordinates[self.being_in_the_list][0]
                 self.rect.y = self.list_of_line_coordinates[self.being_in_the_list][1]
                 self.being_in_the_list += self.speed
-                self.collide(self.game.mobs, self.game.obstacles)
+                self.collide(self.target_group, self.game.obstacles)
 
             except IndexError:
                 self.kill()
@@ -186,6 +195,7 @@ class Mob(pygame.sprite.Sprite):
         self.target = game.player
         self.image = MOB_IMAGE
         self.health_points = MOB_HP
+        self.target_group = game.players
 
         self.rect = self.image.get_rect()
         self.rect.topleft = x, y
@@ -201,6 +211,24 @@ class Mob(pygame.sprite.Sprite):
         self.rotation = 0
         self.zero_degree_vector = pygame.math.Vector2()
         self.zero_degree_vector.x, self.zero_degree_vector.y = 1, 0
+
+        self.clock = pygame.time.Clock()
+        self.clock.tick(FPS)
+
+        self.inventory = [Weapon('gun', self.target_group, self)]
+        self.current_weapon = self.inventory[0]
+
+    def add_weapon(self, weapon_kind):
+        if len(self.inventory) <= 8 and weapon_kind not in [weapon.kind for weapon in self.inventory]:
+            self.inventory.append(Weapon(weapon_kind, self.target_group, self))
+
+    def choose_weapon(self, index):
+        if -1 < index < len(self.inventory):
+            self.current_weapon = self.inventory[index]
+
+    def attack(self, pos):
+        if self.current_weapon:
+            self.current_weapon.attack(pos)
 
     def get_damage(self, damage):
         self.health_points -= damage
@@ -237,6 +265,8 @@ class Mob(pygame.sprite.Sprite):
 
     def update(self):
         try:
+            self.current_weapon.cooldown_tracker += self.clock.get_time()
+
             self.rect.center = self.position
 
             self.rotation = (self.game.player.rect.topleft - self.position).angle_to(self.zero_degree_vector)
@@ -249,6 +279,7 @@ class Mob(pygame.sprite.Sprite):
             self.position += self.velocity * self.game.tick
 
             self.collide(self.game.obstacles)
+            self.attack(self.game.player.rect.center)
 
         except ValueError:
             pass
