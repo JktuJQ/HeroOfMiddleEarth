@@ -9,6 +9,7 @@ class Player(pygame.sprite.Sprite):
         self.game = game
 
         self.rect = self.image.get_rect()
+        self.health_points = PLAYER_HP
 
         self.x = x
         self.y = y
@@ -29,6 +30,12 @@ class Player(pygame.sprite.Sprite):
     def attack(self, pos):
         if self.current_weapon:
             self.current_weapon.attack(pos)
+
+    def get_damage(self, damage):
+        self.health_points -= damage
+        if self.health_points <= 0:
+            self.kill()
+            self.game.game_over()
 
     def collide(self, group):
         self.rect.x = self.x
@@ -54,6 +61,7 @@ class Player(pygame.sprite.Sprite):
     def update(self):
         self.x += self.x_speed * self.game.tick * 0.7
         self.y += self.y_speed * self.game.tick * 0.7
+        self.current_weapon.cooldown_tracker += self.game.clock.get_time()
 
         self.collide(self.game.obstacles)
 
@@ -65,28 +73,39 @@ class Weapon:
         self.kind = kind
         self.player = player
 
+        self.cooldown = INVENTORY_PROP[kind]['cooldown']
+        self.cooldown_tracker = 0
+
     def attack(self, pos):
-        Bullet(self.player.rect.x + 15, self.player.rect.y + 15, pos[0], pos[1], self.kind, self)
+        if self.cooldown_tracker >= self.cooldown:
+            Bullet(self.player.rect.x + 15, self.player.rect.y + 15, pos[0], pos[1], self.kind, self)
+            self.cooldown_tracker = 0
 
 
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y, x1, y1, kind, weapon):
         import math
+        import pyganim
         pygame.sprite.Sprite.__init__(self, weapon.player.game.sprites)
-        self.style = INVENTORY_PROP[kind][0]
-        self.dist = INVENTORY_PROP[kind][1]
+        self.style = INVENTORY_PROP[kind]['type of shooting']
+        self.dist = INVENTORY_PROP[kind]['range']
+        self.damage = INVENTORY_PROP[kind]['damage']
         self.y = y
         self.x = x
+        self.weapon = weapon
         self.game = weapon.player.game
         self.cam_pos = self.game.camera.camera.topleft
         self.mouse_x = int(x1) + abs(self.cam_pos[0])
         self.mouse_y = int(y1) + abs(self.cam_pos[1])
         self.speed = 6
-        self.power = INVENTORY_PROP[kind][2]
+        boltanim = []
+        for anim in INVENTORY_PROP[self.weapon.kind]['animation']['end']:
+            boltanim.append((anim, 1.1))
+        self.boltanim_end = pyganim.PygAnimation(boltanim)
         self.being_in_the_list = 0
         if self.style == 'line':
-            self.image = pygame.Surface((15, 10), pygame.SRCALPHA)
-            pygame.draw.circle(self.image, pygame.Color('yellow'), (7, 5), 5)
+            self.image = INVENTORY_PROP[kind]['animation']['start']
+            self.rect = self.image.get_rect()
             self.rect = self.image.get_rect()
             self.side_x = self.mouse_x - self.x
             self.side_y = self.mouse_y - self.y
@@ -112,9 +131,19 @@ class Bullet(pygame.sprite.Sprite):
                 self.rect.x = self.list_of_line_coordinates[self.being_in_the_list][0]
                 self.rect.y = self.list_of_line_coordinates[self.being_in_the_list][1]
                 self.being_in_the_list += self.speed
+                self.collide(self.game.mobs, self.game.obstacles)
 
             except IndexError:
                 self.kill()
+
+    def collide(self, target_group, collision_group):
+        if pygame.sprite.spritecollide(self, collision_group, False):
+            self.kill()
+        targets_hits = pygame.sprite.spritecollide(self, target_group, False)
+        if targets_hits:
+            for target in targets_hits:
+                target.get_damage(self.damage)
+            self.kill()
 
     def get_line(self, x1, y1, x2, y2):
         points = []
@@ -154,7 +183,10 @@ class Mob(pygame.sprite.Sprite):
     def __init__(self, x, y, game):
         pygame.sprite.Sprite.__init__(self, game.sprites, game.mobs)
         self.game = game
+        self.target = game.player
         self.image = MOB_IMAGE
+        self.health_points = MOB_HP
+
         self.rect = self.image.get_rect()
         self.rect.topleft = x, y
 
@@ -169,6 +201,11 @@ class Mob(pygame.sprite.Sprite):
         self.rotation = 0
         self.zero_degree_vector = pygame.math.Vector2()
         self.zero_degree_vector.x, self.zero_degree_vector.y = 1, 0
+
+    def get_damage(self, damage):
+        self.health_points -= damage
+        if self.health_points <= 0:
+            self.kill()
 
     def avoid(self):
         for mob in self.game.mobs:

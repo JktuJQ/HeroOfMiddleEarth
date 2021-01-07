@@ -65,6 +65,9 @@ class Game:
         self.camera.update(self.player)
         self.render()
 
+    def game_over(self):
+        pass
+
     def run(self):
         self.setup()
 
