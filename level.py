@@ -14,6 +14,9 @@ class Camera:
     def apply_map(self, map):
         return map.move(self.camera.topleft)
 
+    def apply_pos(self, pos):
+        return pos[0] + abs(self.camera.topleft[0]), pos[1] + abs(self.camera.topleft[1])
+
     def update(self, target):
         x = -target.rect.x + int(WIDTH / 2)
         y = -target.rect.y + int(HEIGHT / 2)
@@ -37,6 +40,7 @@ class Game:
         self.sprites = pygame.sprite.Group()
         self.obstacles = pygame.sprite.Group()
         self.mobs = pygame.sprite.Group()
+        self.players = pygame.sprite.Group()
 
     def load_map(self):
         self.map = Map('testMap.tmx')
@@ -65,6 +69,9 @@ class Game:
         self.camera.update(self.player)
         self.render()
 
+    def game_over(self):
+        pass
+
     def run(self):
         self.setup()
 
@@ -77,7 +84,7 @@ class Game:
                     running = False
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == pygame.BUTTON_LEFT:
-                        self.player.attack(event.pos)
+                        self.player.attack(self.camera.apply_pos(event.pos))
             pressed_keys = pygame.key.get_pressed()
             if pressed_keys[pygame.K_w]:
                 self.player.y_speed = -PLAYER_SPEED
