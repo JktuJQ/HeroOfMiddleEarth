@@ -1,3 +1,6 @@
+import sys
+import os
+os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hidden"
 import pygame
 
 
