@@ -3,7 +3,7 @@ from level import *
 
 def main():
     game = Game()
-    game.run()
+    game.set_level(0)
 
 
 if __name__ == '__main__':

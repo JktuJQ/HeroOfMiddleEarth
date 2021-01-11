@@ -25,6 +25,8 @@ INVENTORY_PROP = {'gun': {'type of shooting': 'line', 'range': 200, 'damage': 20
                           'cooldown': 500},
                   'sword': {'type of shooting': 'circle', 'range': 50, 'damage': 50, 'cooldown': 500}}
 
+LEVELS = ['testMap.tmx']
+
 TILE_SIZE = 32
 FPS = 60
 MAP_WIDTH = 50
