@@ -28,10 +28,12 @@ class Camera:
         self.camera = pygame.Rect(x, y, self.width, self.height)
 
 
-class Game:
-    def __init__(self):
+class Level:
+    def __init__(self, index, game):
         pygame.init()
         pygame.display.set_caption('Test')
+        self.index = index
+        self.game = game
 
         self.clock = pygame.time.Clock()
         self.tick = self.clock.tick(FPS) / 1000
@@ -43,7 +45,7 @@ class Game:
         self.players = pygame.sprite.Group()
 
     def load_map(self):
-        self.map = Map('testMap.tmx')
+        self.map = Map(LEVELS[self.index])
         self.full_map = self.map.full_map()
         self.map_rect = self.full_map.get_rect()
 
@@ -64,37 +66,59 @@ class Game:
                 Mob(object.x, object.y, self)
         self.camera = Camera(MAP_SIZE[0], MAP_SIZE[1])
 
+
+class Game:
+    def terminate(self):
+        self.running = False
+        pygame.quit()
+        sys.exit(0)
+
+    def setup(self, index):
+        self.current_level = Level(index, self)
+        self.current_level.setup()
+
     def update(self):
-        self.sprites.update()
-        self.camera.update(self.player)
-        self.render()
+        self.current_level.sprites.update()
+        self.current_level.camera.update(self.current_level.player)
+        self.current_level.render()
+
+    def set_level(self, index, player_pos_index=0):
+        self.running = False
+        self.run(index)
 
     def game_over(self):
-        pass
+        self.terminate()
 
-    def run(self):
-        self.setup()
+    def run(self, index):
+        try:
+            self.setup(index)
 
-        running = True
-        while running:
-            self.clock.tick(FPS)
+            self.running = True
+            while self.running:
+                self.current_level.clock.tick(FPS)
 
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    if event.button == pygame.BUTTON_LEFT:
-                        self.player.attack(self.camera.apply_pos(event.pos))
-            pressed_keys = pygame.key.get_pressed()
-            if pressed_keys[pygame.K_w]:
-                self.player.y_speed = -PLAYER_SPEED
-            if pressed_keys[pygame.K_s]:
-                self.player.y_speed = PLAYER_SPEED
-            if pressed_keys[pygame.K_a]:
-                self.player.x_speed = -PLAYER_SPEED
-            if pressed_keys[pygame.K_d]:
-                self.player.x_speed = PLAYER_SPEED
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        self.running = False
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                        if event.button == pygame.BUTTON_LEFT:
+                            self.current_level.player.attack(self.current_level.camera.apply_pos(event.pos))
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                        if event.button == pygame.BUTTON_RIGHT:
+                            self.set_level(0)
+                pressed_keys = pygame.key.get_pressed()
+                if pressed_keys[pygame.K_w]:
+                    self.current_level.player.y_speed = -PLAYER_SPEED
+                if pressed_keys[pygame.K_s]:
+                    self.current_level.player.y_speed = PLAYER_SPEED
+                if pressed_keys[pygame.K_a]:
+                    self.current_level.player.x_speed = -PLAYER_SPEED
+                if pressed_keys[pygame.K_d]:
+                    self.current_level.player.x_speed = PLAYER_SPEED
+                if pressed_keys[pygame.K_ESCAPE]:
+                    self.terminate()
+                self.update()
 
-            self.update()
-
-        pygame.quit()
+            pygame.quit()
+        except pygame.error:
+            pygame.quit()

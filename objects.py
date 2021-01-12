@@ -36,7 +36,7 @@ class Player(pygame.sprite.Sprite):
         self.health_points -= damage
         if self.health_points <= 0:
             self.kill()
-            self.game.game_over()
+            self.game.game.game_over()
 
     def collide(self, group):
         self.rect.x = self.x
