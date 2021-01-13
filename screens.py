@@ -78,14 +78,17 @@ class Menu:
                             self.terminate()
 
                         elif event.type == pygame.MOUSEMOTION:
-                            self.buttons.update(command="choose", x=event.pos[0], y=event.pos[1])
+                            for button in self.buttons:
+                                button.update(command="choose", x=event.pos[0], y=event.pos[1])
 
                         elif event.type == pygame.MOUSEBUTTONDOWN:
                             if event.button == 1:
-                                self.buttons.update(command="clicked", x=event.pos[0], y=event.pos[1])
+                                for button in self.buttons:
+                                    button.update(command="clicked", x=event.pos[0], y=event.pos[1])
                     self.labels.draw(self.screen)
                     self.buttons.draw(self.screen)
-                    self.buttons.update(command="render_text")
+                    for button in self.buttons:
+                        button.update(command="render_text")
                     pygame.display.flip()
                 else:
                     self.loading_widgets.draw(self.screen)

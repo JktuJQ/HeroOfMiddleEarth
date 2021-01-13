@@ -78,16 +78,16 @@ class Button(pygame.sprite.Sprite):
             return True
         return False
 
-    def update(self, *args, command: str = "", **kwargs) -> None:
+    def update(self, command: str = "", x=0, y=0) -> None:
         if command == "move":
-            self.move_to(kwargs["x"], kwargs["y"])
+            self.move_to(x, y)
         elif command == "choose":
-            if self.on_click(kwargs["x"], kwargs["y"]):
+            if self.on_click(x, y):
                 self.choose()
             else:
                 self.unchoose()
         elif command == "clicked":
-            if self.on_click(kwargs["x"], kwargs["y"]):
+            if self.on_click(x, y):
                 self.clicked()
         elif command == "render_text":
             self.label.update()

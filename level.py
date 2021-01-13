@@ -39,6 +39,7 @@ class Level:
         self.tick = self.clock.tick(FPS) / 1000
         self.screen = pygame.display.set_mode(WINDOW_SIZE)
 
+        self.wave_index = 0
         self.sprites = pygame.sprite.Group()
         self.obstacles = pygame.sprite.Group()
         self.mobs = pygame.sprite.Group()
@@ -63,8 +64,15 @@ class Level:
             if object.name == 'Wall':
                 Obstacle(object.x, object.y, object.width, object.height, self)
             if object.name == 'Mob':
-                Mob(object.x, object.y, self)
+                Mob(object.x, object.y, object.type, self)
+            if object.name == 'Door':
+                self.door = Door(object.x, object.y, object.width, object.height, object.type, self)
         self.camera = Camera(MAP_SIZE[0], MAP_SIZE[1])
+
+    def respawn_mobs(self):
+        for object in self.map.tiled_map_data.objects:
+            if object.name == 'Mob':
+                Mob(object.x, object.y, object.type, self)
 
 
 class Game:
@@ -84,6 +92,11 @@ class Game:
         self.current_level.setup()
 
     def update(self):
+        if self.current_level.wave_index <= 1:
+            if self.current_level.mobs.empty():
+                self.current_level.respawn_mobs()
+        else:
+            self.current_level.door.activated = True
         self.current_level.sprites.update()
         self.current_level.camera.update(self.current_level.player)
         self.current_level.render()
