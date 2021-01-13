@@ -31,7 +31,7 @@ class Camera:
 class Level:
     def __init__(self, index, game):
         pygame.init()
-        pygame.display.set_caption('Test')
+        pygame.display.set_caption("Hero of MiddleEarth")
         self.index = index
         self.game = game
 
@@ -68,6 +68,12 @@ class Level:
 
 
 class Game:
+    def __init__(self):
+        self.paused = False
+
+    def pause(self):
+        self.paused = True
+
     def terminate(self):
         self.running = False
         pygame.quit()
@@ -96,25 +102,26 @@ class Game:
             self.running = True
             while self.running:
                 self.current_level.clock.tick(FPS)
-
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT:
-                        self.running = False
-                    if event.type == pygame.MOUSEBUTTONDOWN:
-                        if event.button == pygame.BUTTON_LEFT:
-                            self.current_level.player.attack(self.current_level.camera.apply_pos(event.pos))
-                    if event.type == pygame.MOUSEBUTTONDOWN:
-                        if event.button == pygame.BUTTON_RIGHT:
-                            self.set_level(0)
+                if not self.paused:
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:
+                            self.running = False
+                        if event.type == pygame.MOUSEBUTTONDOWN:
+                            if event.button == pygame.BUTTON_LEFT:
+                                self.current_level.player.attack(self.current_level.camera.apply_pos(event.pos))
+                        if event.type == pygame.MOUSEBUTTONDOWN:
+                            if event.button == pygame.BUTTON_RIGHT:
+                                self.set_level(0)
                 pressed_keys = pygame.key.get_pressed()
-                if pressed_keys[pygame.K_w]:
-                    self.current_level.player.y_speed = -PLAYER_SPEED
-                if pressed_keys[pygame.K_s]:
-                    self.current_level.player.y_speed = PLAYER_SPEED
-                if pressed_keys[pygame.K_a]:
-                    self.current_level.player.x_speed = -PLAYER_SPEED
-                if pressed_keys[pygame.K_d]:
-                    self.current_level.player.x_speed = PLAYER_SPEED
+                if not self.paused:
+                    if pressed_keys[pygame.K_w]:
+                        self.current_level.player.y_speed = -PLAYER_SPEED
+                    if pressed_keys[pygame.K_s]:
+                        self.current_level.player.y_speed = PLAYER_SPEED
+                    if pressed_keys[pygame.K_a]:
+                        self.current_level.player.x_speed = -PLAYER_SPEED
+                    if pressed_keys[pygame.K_d]:
+                        self.current_level.player.x_speed = PLAYER_SPEED
                 if pressed_keys[pygame.K_ESCAPE]:
                     self.terminate()
                 self.update()

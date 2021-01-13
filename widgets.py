@@ -2,21 +2,6 @@ from constants import *
 import typing
 
 
-# Functions
-def load_data(name):
-    fullname = os.path.join('data', name)
-    if not os.path.isfile(fullname):
-        print(f"Файл '{fullname}' не найден")
-        sys.exit()
-    ext = fullname.split(".")[-1].lower()
-    file = None
-    if ext == "png" or ext == "jpg":  # Load image
-        file = pygame.image.load(fullname)
-    elif ext == "ttf":  # Load font
-        file = pygame.font.Font(name, 25)
-    return file  # If file is None, then file extension is unknown
-
-
 # Classes
 class Label(pygame.sprite.Sprite):
 
@@ -116,8 +101,9 @@ class LoadingBar(pygame.sprite.Sprite):
 
         self.screen = screen
 
-        self.image = image
-        self.rect = self.image.get_rect()
+        self.source_image = image
+        self.image = self.source_image.copy()
+        self.rect = self.source_image.get_rect()
 
         self.set_percent(percent)
 
@@ -130,8 +116,7 @@ class LoadingBar(pygame.sprite.Sprite):
         self.rect.x, self.rect.y = x, y
 
     def set_percent(self, percent: float):
-        self.image = pygame.transform.scale(self.image, (round(self.rect.width * percent), self.rect.height))
-        self.rect = self.image.get_rect()
+        self.image = pygame.transform.scale(self.source_image.copy(), (round(self.rect.width * percent), self.rect.height))
 
     def update(self, *args, command: str = "", **kwargs):
         self.screen.blit(self.image, self.rect)
