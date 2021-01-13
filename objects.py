@@ -11,7 +11,7 @@ class Player(pygame.sprite.Sprite):
 
         self.rect = self.image.get_rect()
         self.health_points = PLAYER_HP
-
+        self.draw = 0
         self.x = x
         self.y = y
         self.x_speed = 0
@@ -19,6 +19,30 @@ class Player(pygame.sprite.Sprite):
 
         self.inventory = [Weapon('gun', self.target_group, self)]
         self.current_weapon = self.inventory[0]
+
+    def draw_left(self):
+        if self.draw >= 20:
+            self.draw = 0
+        self.image = LEFT_HERO[self.draw // 5]
+        self.draw += 1
+
+    def draw_right(self):
+        if self.draw >= 20:
+            self.draw = 0
+        self.image = RIGHT_HERO[self.draw // 5]
+        self.draw += 1
+
+    def draw_down(self):
+        if self.draw >= 20:
+            self.draw = 0
+        self.image = DOWN_HERO[self.draw // 5]
+        self.draw += 1
+
+    def draw_top(self):
+        if self.draw >= 20:
+            self.draw = 0
+        self.image = TOP_HERO[self.draw // 5]
+        self.draw += 1
 
     def add_weapon(self, weapon_kind):
         if len(self.inventory) <= 8 and weapon_kind not in [weapon.kind for weapon in self.inventory]:
@@ -35,6 +59,7 @@ class Player(pygame.sprite.Sprite):
     def get_damage(self, damage):
         self.health_points -= damage
         if self.health_points <= 0:
+            self.game.running = False
             self.kill()
             self.game.game_over()
 
@@ -60,8 +85,22 @@ class Player(pygame.sprite.Sprite):
             self.rect.y = self.y
 
     def update(self):
-        self.x += self.x_speed * self.game.tick * 0.7
-        self.y += self.y_speed * self.game.tick * 0.7
+        if self.x_speed > 0:
+            self.x += self.x_speed * self.game.tick * 0.7
+            self.draw_right()
+        elif self.x_speed < 0:
+            self.x += self.x_speed * self.game.tick * 0.7
+            self.draw_left()
+        if self.y_speed > 0:
+            self.y += self.y_speed * self.game.tick * 0.7
+            if self.x_speed == 0:
+                self.draw_down()
+        elif self.y_speed < 0:
+            self.y += self.y_speed * self.game.tick * 0.7
+            if self.x_speed == 0:
+                self.draw_top()
+        if self.x_speed == 0 and self.y_speed == 0:
+            self.image = PLAYER_IMAGE
         self.current_weapon.cooldown_tracker += self.game.clock.get_time()
 
         self.collide(self.game.obstacles)
@@ -101,19 +140,18 @@ class Bullet(pygame.sprite.Sprite):
         self.target_group = target_group
         self.y = y
         self.x = x
+        self.kind = kind
         self.weapon = weapon
         self.game = weapon.player.game
         self.cam_pos = self.game.camera.camera.topleft
-        self.mouse_x = int(x1) + abs(self.cam_pos[0])
-        self.mouse_y = int(y1) + abs(self.cam_pos[1])
+        self.mouse_x = int(x1)
+        self.mouse_y = int(y1)
+        self.c = 0
         self.speed = 6
-        boltanim = []
-        for anim in INVENTORY_PROP[self.weapon.kind]['animation']['end']:
-            boltanim.append((anim, 1.1))
-        self.boltanim_end = pyganim.PygAnimation(boltanim)
         self.being_in_the_list = 0
         if self.style == 'line':
-            self.image = INVENTORY_PROP[kind]['animation']['start']
+            self.image = INVENTORY_PROP[kind]['animation']['end'][0]
+            self.image.set_colorkey((255, 255, 255))
             self.rect = self.image.get_rect()
             self.rect = self.image.get_rect()
             self.side_x = self.mouse_x - self.x
