@@ -1,11 +1,14 @@
-from constants import *
 from random import randint
-from widgets import *
+
 from save import *
+from widgets import *
 
 
 class Menu:
     def __init__(self):
+        pygame.mixer.music.load(os.path.join("data", "main_theme.mid"))
+        pygame.mixer.music.play()
+
         self.running = False
 
         self.loading = False
@@ -72,22 +75,22 @@ class Menu:
         try:
             while self.running:
                 self.screen.blit(self.background, self.background.get_rect())
-                if not self.loading:
-                    for event in pygame.event.get():
-                        if event.type == pygame.QUIT:
-                            self.terminate()
-
-                        elif event.type == pygame.MOUSEMOTION:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        self.terminate()
+                    if not self.loading:
+                        if event.type == pygame.MOUSEMOTION:
                             self.buttons.update(command="choose", x=event.pos[0], y=event.pos[1])
 
                         elif event.type == pygame.MOUSEBUTTONDOWN:
                             if event.button == 1:
                                 self.buttons.update(command="clicked", x=event.pos[0], y=event.pos[1])
-                    self.labels.draw(self.screen)
-                    self.buttons.draw(self.screen)
-                    self.buttons.update(command="render_text")
-                    pygame.display.flip()
-                else:
+                    if not self.loading:
+                        self.labels.draw(self.screen)
+                        self.buttons.draw(self.screen)
+                        self.buttons.update(command="render_text")
+                        pygame.display.flip()
+                if self.loading:
                     self.loading_widgets.draw(self.screen)
                     self.loading_percent += (0.1 if randint(0, 200) == 0 else 0)
                     self.loading_bar.set_percent(self.loading_percent)

@@ -1,5 +1,6 @@
 from map import *
 from objects import *
+from widgets import *
 
 
 class Camera:
@@ -71,8 +72,29 @@ class Game:
     def __init__(self):
         self.paused = False
 
+        self.hud_widgets = pygame.sprite.Group()
+        self.pause_widgets = pygame.sprite.Group()
+
     def pause(self):
         self.paused = True
+        self.pause_menu = LoadingBar(self.current_level.screen, 600, 100, load_data("background_pause_menu.png"),
+                                     self.pause_widgets)
+        self.unpause_button = Button(self.current_level.screen, "Continue", 710, 250, self.unpause, self.pause_widgets,
+                                     text_offset=(30, 25))
+        self.menu_button = Button(self.current_level.screen, "To menu", 710, 370, self.menu, self.pause_widgets,
+                                  text_offset=(30, 25))
+        self.exit_button = Button(self.current_level.screen, "Exit", 710, 490, self.terminate, self.pause_widgets,
+                                  text_offset=(65, 25))
+
+    def unpause(self):
+        self.paused = False
+
+    def menu(self):
+        self.running = False
+        self.paused = False
+        from screens import Menu
+        menu = Menu()
+        menu.mainloop()
 
     def terminate(self):
         self.running = False
@@ -81,6 +103,19 @@ class Game:
 
     def setup(self, index):
         self.current_level = Level(index, self)
+        self.background_hp_bar = LoadingBar(self.current_level.screen, 0, 850, load_data("background_hp_bar.png"),
+                                            self.hud_widgets)
+        self.hp_bar = LoadingBar(self.current_level.screen, 0, 850, load_data("hp_bar.png"), self.hud_widgets,
+                                 percent=0.8)
+        self.hp_label = Label(self.current_level.screen, 20, 860, "Hp: 80/100", load_data("title_font.ttf", size=20),
+                              20,
+                              self.hud_widgets)
+        self.background_status_label = LoadingBar(self.current_level.screen, 230, 850,
+                                                  load_data("background_status_label.png"), self.hud_widgets,
+                                                  percent=1)
+        self.status_label = Label(self.current_level.screen, 250, 860, "Tips: ", load_data("title_font.ttf", size=20),
+                                  20,
+                                  self.hud_widgets)
         self.current_level.setup()
 
     def update(self):
@@ -102,16 +137,22 @@ class Game:
             self.running = True
             while self.running:
                 self.current_level.clock.tick(FPS)
-                if not self.paused:
-                    for event in pygame.event.get():
-                        if event.type == pygame.QUIT:
-                            self.running = False
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        self.running = False
+                    if not self.paused:
                         if event.type == pygame.MOUSEBUTTONDOWN:
                             if event.button == pygame.BUTTON_LEFT:
                                 self.current_level.player.attack(self.current_level.camera.apply_pos(event.pos))
+                    else:
+                        if event.type == pygame.MOUSEMOTION:
+                            for widget in self.pause_widgets:
+                                widget.update(command="choose", x=event.pos[0], y=event.pos[1])
+
                         if event.type == pygame.MOUSEBUTTONDOWN:
-                            if event.button == pygame.BUTTON_RIGHT:
-                                self.set_level(0)
+                            if event.button == pygame.BUTTON_LEFT:
+                                for widget in self.pause_widgets:
+                                    widget.update(command="clicked", x=event.pos[0], y=event.pos[1])
                 pressed_keys = pygame.key.get_pressed()
                 if not self.paused:
                     if pressed_keys[pygame.K_w]:
@@ -123,8 +164,16 @@ class Game:
                     if pressed_keys[pygame.K_d]:
                         self.current_level.player.x_speed = PLAYER_SPEED
                 if pressed_keys[pygame.K_ESCAPE]:
-                    self.terminate()
-                self.update()
+                    self.pause()
+                if not self.paused:
+                    self.update()
+                    self.hud_widgets.draw(self.current_level.screen)
+                if self.paused:
+                    self.pause_widgets.draw(self.current_level.screen)
+                    self.unpause_button.update(command="render_text")
+                    self.menu_button.update(command="render_text")
+                    self.exit_button.update(command="render_text")
+                pygame.display.flip()
 
             pygame.quit()
         except pygame.error:
