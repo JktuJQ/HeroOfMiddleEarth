@@ -59,16 +59,13 @@ def main():
                 if e.type == KEYUP and e.key == K_2:
                     weapon = 2
             screen.blit(bg, (0, 0))
-            n = camera.get_cord()
-            hero.update(left, right, up, down, pos, weapon - 1, n, platforms)
+            hero.update(left, right, up, down, pos, weapon, platforms)
             for i in bullets:
                 i.update()
             camera.update(hero)
             for e in entities:
                 screen.blit(e.image, camera.apply(e))
             pygame.display.update()
-
-
 
 
 class Player(sprite.Sprite):
@@ -95,9 +92,9 @@ class Player(sprite.Sprite):
     def get_cord(self):
         return (self.rect.x, self.rect.y)
 
-    def update(self, left, right, up, down, pos, weap, n, platforms):
+    def update(self, left, right, up, down, pos, weap, platforms):
         if pos != ('', ''):
-            self.weapon(pos, weap, n)
+            self.weapon(pos, weap)
 
         if left and not right:
             self.xvel = -MOVE_SPEED  # Лево = x- n
@@ -125,8 +122,8 @@ class Player(sprite.Sprite):
         self.rect.x += self.xvel  # переносим свои положение на xvel
         self.collide(self.xvel, 0, platforms)
 
-    def weapon(self, pos, weap, n):
-        bullet = Bullet(self.rect.x + 15, self.rect.y + 15, pos[0], pos[1], INVENTORY[weap], n)
+    def weapon(self, pos, weap):
+        bullet = Bullet(self.rect.x + 15, self.rect.y + 15, pos[0], pos[1], INVENTORY[weap])
         entities.add(bullet)
         bullets.add(bullet)
 
@@ -165,86 +162,38 @@ class Player(sprite.Sprite):
 
 
 class Bullet(pygame.sprite.Sprite):
-    def __init__(self, x, y, x1, y1, type, n):
-        import math
+    def __init__(self, x, y, x1, y1, type):
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.Surface((15, 10))
         self.image.fill('YELLOW')
         self.rect = self.image.get_rect()
-        self.y = y
-        self.x = x
-        self.cam_pos = n
-        self.mouse_x = x1 + abs(self.cam_pos[0])
-        self.mouse_y = y1 + abs(self.cam_pos[1])
-        self.speed = 5
-        self.being_in_the_list = 0
-        print(self.x, self.y)
-        print('++++')
-        print(self.mouse_x, self.mouse_y)
-        print('------------')
-        self.side_x = self.mouse_x - self.x
-        self.side_y = self.mouse_y - self.y
-        self.hyp = math.hypot(self.side_x, self.side_y)
-        self.sin = abs(self.side_y) / self.hyp
-        self.cos = abs(self.side_x) / self.hyp
-        self.degree = math.degrees(math.asin(self.sin))
-        self.dist = INVENTORY_PROP[type][1]
-        self.power = INVENTORY_PROP[type][2]
-        self.style = INVENTORY_PROP[type][0]
-        if self.hyp > self.dist:
-            self.hyp = self.dist
-            self.side_y = self.hyp * math.sin(math.radians(self.degree)) * (1 if self.side_y >= 0 else -1)
-            self.side_x = self.hyp * math.cos(math.radians(self.degree)) * (1 if self.side_x >= 0 else -1)
-        self.list_of_line_coordinates = self.get_line(x, y,
-                                                      x + int(self.side_x),
-                                                      y + int(self.side_y))
+        self.rect.y = y
+        self.rect.x = x
+        self.mouse_x = x1
+        self.distan = 0
+        self.dist = INVENTORY_PROP[type][0]
+        self.power = INVENTORY_PROP[type][1]
+        self.mouse_y = y1
 
     def update(self):
-        n = Camera.get_cord
-        if self.style == 'line':
-            try:
-                self.rect.x = self.list_of_line_coordinates[self.being_in_the_list][0]
-                self.rect.y = self.list_of_line_coordinates[self.being_in_the_list][1]
-                self.being_in_the_list += self.speed
-                for p in platforms:
-                    if sprite.collide_rect(self, p):
-                        self.kill()
-            except IndexError:
+        import math
+        speed = 4
+        distance = [self.mouse_x - self.rect.x, self.mouse_y - self.rect.y]
+        print(distance)
+        if distance == 0:
+            self.distan = distance
+        norm = math.sqrt(distance[0] ** 2 + distance[1] ** 2)
+        for p in platforms:
+            if sprite.collide_rect(self, p):
                 self.kill()
-
-    def get_line(self, x1, y1, x2, y2):
-        points = []
-        issteep = abs(y2 - y1) > abs(x2 - x1)
-        if issteep:
-            x1, y1 = y1, x1
-            x2, y2 = y2, x2
-        rev = False
-        if x1 > x2:
-            x1, x2 = x2, x1
-            y1, y2 = y2, y1
-            rev = True
-        deltax = x2 - x1
-        deltay = abs(y2 - y1)
-        error = int(deltax / 2)
-        y = y1
-        ystep = None
-        if y1 < y2:
-            ystep = 1
+        if int(norm) < 5:
+            self.kill()
         else:
-            ystep = -1
-        for x in range(x1, x2 + 1):
-            if issteep:
-                points.append((y, x))
-            else:
-                points.append((x, y))
-            error -= deltay
-            if error < 0:
-                y += ystep
-                error += deltax
-        if rev:
-            points.reverse()
-        return points
+            direction = [distance[0] / norm, distance[1] / norm]
+            bullet_vector = [direction[0] * speed, direction[1] * speed]
 
+            self.rect.x += bullet_vector[0]
+            self.rect.y += bullet_vector[1]
 
 
 
@@ -311,15 +260,12 @@ class Camera(object):
     def update(self, target):
         self.state = self.camera_func(self.state, target.rect)
 
-    def get_cord(self):
-        print(self.state.topleft)
-        return self.state.topleft
 
 WIN_WIDTH = 800  # Ширина создаваемого окна
 WIN_HEIGHT = 640  # Высота
 INVENTORY = ['gun', 'sword']
 bullets = pygame.sprite.Group()
-INVENTORY_PROP = {'gun': ['line', 200, 20], 'sword': ['circle', 50, 50]}
+INVENTORY_PROP = {'gun': [200, 20], 'sword': [50, 50]}
 DISPLAY = (WIN_WIDTH, WIN_HEIGHT)
 BACKGROUND_COLOR = "#004400"
 PLATFORM_WIDTH = 32
