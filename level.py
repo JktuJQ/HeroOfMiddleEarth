@@ -110,6 +110,7 @@ class Game:
         self.paused = True
         pygame.mixer.music.pause()
 
+        self.pause_widgets = pygame.sprite.Group()
         self.pause_menu = LoadingBar(self.current_level.screen, 600, 100, load_data("background_pause_menu.png"),
                                      self.pause_widgets)
         self.paused_label = Label(self.current_level.screen, 710, 130, "Paused!", load_data("title_font.ttf", size=35),
