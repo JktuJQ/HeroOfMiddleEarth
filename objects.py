@@ -133,7 +133,6 @@ class Weapon:
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y, x1, y1, kind, weapon, target_group):
         import math
-        import pyganim
         pygame.sprite.Sprite.__init__(self, weapon.player.game.sprites)
         self.style = INVENTORY_PROP[kind]['type of shooting']
         self.dist = INVENTORY_PROP[kind]['range']
@@ -188,13 +187,11 @@ class Bullet(pygame.sprite.Sprite):
     def collide(self, target_group, collision_group):
         if pygame.sprite.spritecollide(self, collision_group, False):
             self.kill()
-            print(1)
         targets_hits = pygame.sprite.spritecollide(self, target_group, False)
         if targets_hits:
+            self.kill()
             for target in targets_hits:
                 target.get_damage(self.damage)
-            self.kill()
-            print(1)
 
     def get_line(self, x1, y1, x2, y2):
         points = []
@@ -246,6 +243,7 @@ class Mob(pygame.sprite.Sprite):
 
         self.position = pygame.math.Vector2()
         self.position.x, self.position.y = x, y
+        self.draw = 0
 
         self.velocity = pygame.math.Vector2()
         self.velocity.x, self.velocity.y = 0, 0
@@ -286,6 +284,18 @@ class Mob(pygame.sprite.Sprite):
                 if 0 < shift.length() < max(mob.rect.width, mob.rect.height):
                     self.acceleration += shift.normalize()
 
+    def draw_left(self):
+        if self.draw >= 20:
+            self.draw = 0
+        self.image = MOBS[self.type]['animation_l'][self.draw // 10]
+        self.draw += 1
+
+    def draw_right(self):
+        if self.draw >= 20:
+            self.draw = 0
+        self.image = MOBS[self.type]['animation_l'][self.draw // 10]
+        self.draw += 1
+
     def collide(self, group):
         self.rect.centerx = self.position.x
         hits_list = pygame.sprite.spritecollide(self, group, False, lambda a, b: a.rect.colliderect(b.rect))
@@ -312,6 +322,12 @@ class Mob(pygame.sprite.Sprite):
             to_player = self.game.player.rect.topleft - self.position
             if to_player.length() <= 1000:
                 self.triggered = True
+
+            if -90 <= self.rotation <= 90:
+                self.draw_left()
+            else:
+                self.draw_right()
+
             if self.triggered:
                 self.rotation = to_player.angle_to(self.zero_degree_vector)
 
@@ -328,7 +344,7 @@ class Mob(pygame.sprite.Sprite):
 
                 self.collide(self.game.obstacles)
                 self.attack(self.game.player.rect.center)
-
+                print(self.rotation)
         except ValueError:
             pass
 
