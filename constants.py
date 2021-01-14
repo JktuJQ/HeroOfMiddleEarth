@@ -89,11 +89,11 @@ MOBS = {'archer': {'type_gun': 'bow', 'hp': 50, 'speed': 130,
                                     bullet_animation("block/Player/Mobs/Warrior/warrior_run_l.png")]
                     },
         'zombie': {'type_gun': 'zombie_ball', 'hp': 100, 'speed': 100,
-                    'animation_r': [bullet_animation("block/Player/Mobs/Zombie/zombie_stay_r.png"),
-                                    bullet_animation("block/Player/Mobs/Zombie/zombie_run_r.png")],
-                    'animation_l': [bullet_animation("block/Player/Mobs/Zombie/zombie_stay_l.png"),
-                                    bullet_animation("block/Player/Mobs/Zombie/zombie_run_r.png")]
-                    }}
+                   'animation_r': [bullet_animation("block/Player/Mobs/Zombie/zombie_stay_r.png"),
+                                   bullet_animation("block/Player/Mobs/Zombie/zombie_run_r.png")],
+                   'animation_l': [bullet_animation("block/Player/Mobs/Zombie/zombie_stay_l.png"),
+                                   bullet_animation("block/Player/Mobs/Zombie/zombie_run_r.png")]
+                   }}
 
 TILE_SIZE = 32
 FPS = 60

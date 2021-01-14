@@ -97,6 +97,7 @@ class Player(pygame.sprite.Sprite):
             if self.game.door.level_index == 3:
                 self.get_damage(self.health_points)
             else:
+                print(self.game.door.level_index)
                 self.game.game.set_level(self.game.door.level_index)
 
     def update(self):
