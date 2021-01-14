@@ -1,0 +1,99 @@
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self, x, y, x1, y1, kind, weapon, target_group):
+        import math
+        pygame.sprite.Sprite.__init__(self, weapon.player.game.sprites)
+        self.style = INVENTORY_PROP[kind]['type of shooting']
+        self.dist = INVENTORY_PROP[kind]['range']
+        self.damage = INVENTORY_PROP[kind]['damage']
+        self.target_group = target_group
+        self.y = y
+        self.x = x
+        self.kind = kind
+        self.weapon = weapon
+        self.game = weapon.player.game
+        self.cam_pos = self.game.camera.camera.topleft
+        self.mouse_x = int(x1)
+        self.mouse_y = int(y1)
+        self.c = 0
+        self.speed = 6
+        self.being_in_the_list = 0
+        if self.style == 'line':
+            try:
+                self.image = pygame.transform.rotate(INVENTORY_PROP[kind]['animation'],
+                                                     self.weapon.player.rotation - 90)
+            except Exception:
+                self.image = INVENTORY_PROP[kind]['animation']
+            self.image.set_colorkey((255, 255, 255))
+            self.rect = self.image.get_rect()
+            self.rect = self.image.get_rect()
+            self.side_x = self.mouse_x - self.x
+            self.side_y = self.mouse_y - self.y
+            self.hyp = math.hypot(self.side_x, self.side_y)
+            self.sin = abs(self.side_y) / self.hyp
+            self.cos = abs(self.side_x) / self.hyp
+            self.degree = math.degrees(math.asin(self.sin))
+            if self.hyp != self.dist:
+                self.hyp = self.dist
+                self.side_y = self.hyp * math.sin(math.radians(self.degree)) * (1 if self.side_y >= 0 else -1)
+                self.side_x = self.hyp * math.cos(math.radians(self.degree)) * (1 if self.side_x >= 0 else -1)
+            self.list_of_line_coordinates = self.get_line(x, y,
+                                                          x + int(self.side_x),
+                                                          y + int(self.side_y))
+        else:
+            self.image = pygame.Surface((self.dist, self.dist), pygame.SRCALPHA)
+            self.rect = self.image.get_rect()
+            pygame.draw.circle(self.image, pygame.Color('Blue'), (self.dist // 2, self.dist // 2), self.dist // 2, 2)
+        self.update()
+
+    def update(self):
+        if self.style == 'line':
+            try:
+                self.rect.x = self.list_of_line_coordinates[self.being_in_the_list][0]
+                self.rect.y = self.list_of_line_coordinates[self.being_in_the_list][1]
+                self.being_in_the_list += self.speed
+                self.collide(self.target_group, self.game.obstacles)
+
+            except IndexError:
+                self.kill()
+
+    def collide(self, target_group, collision_group):
+        if pygame.sprite.spritecollide(self, collision_group, False):
+            self.kill()
+        targets_hits = pygame.sprite.spritecollide(self, target_group, False)
+        if targets_hits:
+            self.kill()
+            for target in targets_hits:
+                target.get_damage(self.damage)
+
+    def get_line(self, x1, y1, x2, y2):
+        points = []
+        issteep = abs(y2 - y1) > abs(x2 - x1)
+        if issteep:
+            x1, y1 = y1, x1
+            x2, y2 = y2, x2
+        rev = False
+        if x1 > x2:
+            x1, x2 = x2, x1
+            y1, y2 = y2, y1
+            rev = True
+        deltax = x2 - x1
+        deltay = abs(y2 - y1)
+        error = int(deltax / 2)
+        y = y1
+        ystep = None
+        if y1 < y2:
+            ystep = 1
+        else:
+            ystep = -1
+        for x in range(x1, x2 + 1):
+            if issteep:
+                points.append((y, x))
+            else:
+                points.append((x, y))
+            error -= deltay
+            if error < 0:
+                y += ystep
+                error += deltax
+        if rev:
+            points.reverse()
+        return points
