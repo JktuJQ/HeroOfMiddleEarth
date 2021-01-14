@@ -148,6 +148,7 @@ class Game:
         self.current_level = Level(index, self)
 
         from random import choice
+        pygame.mixer.music.set_volume(0.5)
         pygame.mixer.music.load(os.path.join("data", choice(["game_theme1.mid", "game_theme2.mid"])))
         pygame.mixer.music.play()
 

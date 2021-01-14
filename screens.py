@@ -11,6 +11,7 @@ class Menu:
     """
 
     def __init__(self):
+        pygame.mixer.music.set_volume(0.5)
         pygame.mixer.music.load(os.path.join("data", "main_theme.mid"))
         pygame.mixer.music.play()
 

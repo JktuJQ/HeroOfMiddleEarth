@@ -67,6 +67,7 @@ class Player(pygame.sprite.Sprite):
 
     def get_damage(self, damage):
         """Gets damage and loses health points"""
+        pygame.mixer.Sound(os.path.join("data", "hurt.wav")).play()
         self.health_points -= damage
         if self.health_points <= 0:
             self.kill()
@@ -141,6 +142,7 @@ class Weapon:
     def attack(self, pos):
         """Performs attack with weapon"""
         if self.cooldown_tracker >= self.cooldown:
+            pygame.mixer.Sound(os.path.join("data", "shoot.wav")).play()
             Bullet(self.player.rect.x + 15, self.player.rect.y + 15, pos[0], pos[1],
                    self.kind, self, self.target_group)
             self.cooldown_tracker = 0
