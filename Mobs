@@ -1,0 +1,119 @@
+class Mob(pygame.sprite.Sprite):
+    def __init__(self, x, y, type, game):
+        pygame.sprite.Sprite.__init__(self, game.sprites, game.mobs)
+        self.game = game
+        self.type = type
+        self.target = game.player
+        self.image = MOB_IMAGE
+        self.health_points = MOB_HP
+        self.target_group = game.players
+        self.triggered = False
+
+        self.rect = self.image.get_rect()
+        self.rect.topleft = x, y
+
+        self.position = pygame.math.Vector2()
+        self.position.x, self.position.y = x, y
+        self.draw = 0
+
+        self.velocity = pygame.math.Vector2()
+        self.velocity.x, self.velocity.y = 0, 0
+        self.acceleration = pygame.math.Vector2()
+        self.acceleration.x, self.acceleration.y = 0, 0
+
+        self.rotation = 0
+        self.zero_degree_vector = pygame.math.Vector2()
+        self.zero_degree_vector.x, self.zero_degree_vector.y = 1, 0
+
+        self.clock = pygame.time.Clock()
+        self.clock.tick(FPS)
+
+        self.inventory = [Weapon(MOBS[type]['type_gun'], self.target_group, self)]
+        self.current_weapon = self.inventory[0]
+
+    def add_weapon(self, weapon_kind):
+        if len(self.inventory) <= 8 and weapon_kind not in [weapon.kind for weapon in self.inventory]:
+            self.inventory.append(Weapon(weapon_kind, self.target_group, self))
+
+    def choose_weapon(self, index):
+        if -1 < index < len(self.inventory):
+            self.current_weapon = self.inventory[index]
+
+    def attack(self, pos):
+        if self.current_weapon:
+            self.current_weapon.attack(pos)
+
+    def get_damage(self, damage):
+        self.health_points -= damage
+        if self.health_points <= 0:
+            self.kill()
+
+    def avoid(self):
+        for mob in self.game.mobs:
+            if mob != self:
+                shift = self.position - mob.rect.center
+                if 0 < shift.length() < max(mob.rect.width, mob.rect.height):
+                    self.acceleration += shift.normalize()
+
+    def draw_left(self):
+        if self.draw >= 20:
+            self.draw = 0
+        self.image = MOBS[self.type]['animation_l'][self.draw // 10]
+        self.draw += 1
+
+    def draw_right(self):
+        if self.draw >= 20:
+            self.draw = 0
+        self.image = MOBS[self.type]['animation_r'][self.draw // 10]
+        self.draw += 1
+
+    def collide(self, group):
+        self.rect.centerx = self.position.x
+        hits_list = pygame.sprite.spritecollide(self, group, False, lambda a, b: a.rect.colliderect(b.rect))
+        if hits_list:
+            if hits_list[0].rect.centerx > self.rect.centerx:
+                self.position.x = hits_list[0].rect.left - self.rect.width / 2
+            if hits_list[0].rect.centerx < self.rect.centerx:
+                self.position.x = hits_list[0].rect.right + self.rect.width / 2
+            self.velocity.x = 0
+            self.rect.centerx = self.position.x
+
+        self.rect.centery = self.position.y
+        hits_list = pygame.sprite.spritecollide(self, group, False, lambda a, b: a.rect.colliderect(b.rect))
+        if hits_list:
+            if hits_list[0].rect.centery > self.rect.centery:
+                self.position.y = hits_list[0].rect.top - self.rect.height / 2
+            if hits_list[0].rect.centery < self.rect.centery:
+                self.position.y = hits_list[0].rect.bottom + self.rect.height / 2
+            self.velocity.y = 0
+            self.rect.centery = self.position.y
+
+    def update(self):
+        try:
+            to_player = self.game.player.rect.topleft - self.position
+            if to_player.length() <= 1000:
+                self.triggered = True
+
+            if -90 <= self.rotation <= 90:
+                self.draw_left()
+            else:
+                self.draw_right()
+
+            if self.triggered:
+                self.rotation = to_player.angle_to(self.zero_degree_vector)
+
+                self.current_weapon.cooldown_tracker += self.clock.get_time()
+
+                self.rect.center = self.position
+
+                self.acceleration = self.zero_degree_vector.rotate(-self.rotation)
+                self.avoid()
+                self.acceleration.scale_to_length(MOB_SPEED)
+                self.acceleration -= self.velocity
+                self.velocity += self.acceleration * self.game.tick
+                self.position += self.velocity * self.game.tick
+
+                self.collide(self.game.obstacles)
+                self.attack(self.game.player.rect.center)
+        except ValueError:
+            pass
