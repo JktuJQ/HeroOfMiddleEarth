@@ -11,7 +11,7 @@ class Player(pygame.sprite.Sprite):
 
         self.rect = self.image.get_rect()
         self.health_points = PLAYER_HP
-
+        self.draw = 0
         self.x = x
         self.y = y
         self.x_speed = 0
@@ -19,6 +19,30 @@ class Player(pygame.sprite.Sprite):
 
         self.inventory = [Weapon('gun', self.target_group, self)]
         self.current_weapon = self.inventory[0]
+
+    def draw_left(self):
+        if self.draw >= 20:
+            self.draw = 0
+        self.image = LEFT_HERO[self.draw // 5]
+        self.draw += 1
+
+    def draw_right(self):
+        if self.draw >= 20:
+            self.draw = 0
+        self.image = RIGHT_HERO[self.draw // 5]
+        self.draw += 1
+
+    def draw_down(self):
+        if self.draw >= 20:
+            self.draw = 0
+        self.image = DOWN_HERO[self.draw // 5]
+        self.draw += 1
+
+    def draw_top(self):
+        if self.draw >= 20:
+            self.draw = 0
+        self.image = TOP_HERO[self.draw // 5]
+        self.draw += 1
 
     def add_weapon(self, weapon_kind):
         if len(self.inventory) <= 8 and weapon_kind not in [weapon.kind for weapon in self.inventory]:
@@ -35,12 +59,13 @@ class Player(pygame.sprite.Sprite):
     def get_damage(self, damage):
         self.health_points -= damage
         if self.health_points <= 0:
+            self.game.running = False
             self.kill()
             self.game.game.game_over()
 
-    def collide(self, group):
+    def collide(self, groups):
         self.rect.x = self.x
-        hits_list = pygame.sprite.spritecollide(self, group, False)
+        hits_list = pygame.sprite.spritecollide(self, groups, False)
         if hits_list:
             if self.x_speed > 0:
                 self.x = hits_list[0].rect.left - self.rect.width
@@ -50,7 +75,7 @@ class Player(pygame.sprite.Sprite):
             self.rect.x = self.x
 
         self.rect.y = self.y
-        hits_list = pygame.sprite.spritecollide(self, group, False)
+        hits_list = pygame.sprite.spritecollide(self, groups, False)
         if hits_list:
             if self.y_speed > 0:
                 self.y = hits_list[0].rect.top - self.rect.height
@@ -58,12 +83,27 @@ class Player(pygame.sprite.Sprite):
                 self.y = hits_list[0].rect.bottom
             self.y_speed = 0
             self.rect.y = self.y
+        if self.game.door.activated:
+            self.game.game.set_level(self.game.door.level_index)
 
     def update(self):
-        self.x += self.x_speed * self.game.tick * 0.7
-        self.y += self.y_speed * self.game.tick * 0.7
+        if self.x_speed > 0:
+            self.x += self.x_speed * self.game.tick * 0.7
+            self.draw_right()
+        elif self.x_speed < 0:
+            self.x += self.x_speed * self.game.tick * 0.7
+            self.draw_left()
+        if self.y_speed > 0:
+            self.y += self.y_speed * self.game.tick * 0.7
+            if self.x_speed == 0:
+                self.draw_down()
+        elif self.y_speed < 0:
+            self.y += self.y_speed * self.game.tick * 0.7
+            if self.x_speed == 0:
+                self.draw_top()
+        if self.x_speed == 0 and self.y_speed == 0:
+            self.image = PLAYER_IMAGE
         self.current_weapon.cooldown_tracker += self.game.clock.get_time()
-
         self.collide(self.game.obstacles)
 
         self.x_speed, self.y_speed = 0, 0
@@ -101,19 +141,18 @@ class Bullet(pygame.sprite.Sprite):
         self.target_group = target_group
         self.y = y
         self.x = x
+        self.kind = kind
         self.weapon = weapon
         self.game = weapon.player.game
         self.cam_pos = self.game.camera.camera.topleft
         self.mouse_x = int(x1)
         self.mouse_y = int(y1)
+        self.c = 0
         self.speed = 6
-        boltanim = []
-        for anim in INVENTORY_PROP[self.weapon.kind]['animation']['end']:
-            boltanim.append((anim, 1.1))
-        self.boltanim_end = pyganim.PygAnimation(boltanim)
         self.being_in_the_list = 0
         if self.style == 'line':
-            self.image = INVENTORY_PROP[kind]['animation']['start']
+            self.image = INVENTORY_PROP[kind]['animation']
+            self.image.set_colorkey((255, 255, 255))
             self.rect = self.image.get_rect()
             self.rect = self.image.get_rect()
             self.side_x = self.mouse_x - self.x
@@ -133,6 +172,7 @@ class Bullet(pygame.sprite.Sprite):
             self.image = pygame.Surface((self.dist, self.dist), pygame.SRCALPHA)
             self.rect = self.image.get_rect()
             pygame.draw.circle(self.image, pygame.Color('Blue'), (self.dist // 2, self.dist // 2), self.dist // 2, 2)
+        self.update()
 
     def update(self):
         if self.style == 'line':
@@ -189,13 +229,15 @@ class Bullet(pygame.sprite.Sprite):
 
 
 class Mob(pygame.sprite.Sprite):
-    def __init__(self, x, y, game):
+    def __init__(self, x, y, type, game):
         pygame.sprite.Sprite.__init__(self, game.sprites, game.mobs)
         self.game = game
+        self.type = type
         self.target = game.player
         self.image = MOB_IMAGE
         self.health_points = MOB_HP
         self.target_group = game.players
+        self.triggered = False
 
         self.rect = self.image.get_rect()
         self.rect.topleft = x, y
@@ -265,21 +307,25 @@ class Mob(pygame.sprite.Sprite):
 
     def update(self):
         try:
-            self.current_weapon.cooldown_tracker += self.clock.get_time()
+            to_player = self.game.player.rect.topleft - self.position
+            if to_player.length() <= 1000:
+                self.triggered = True
+            if self.triggered:
+                self.rotation = to_player.angle_to(self.zero_degree_vector)
 
-            self.rect.center = self.position
+                self.current_weapon.cooldown_tracker += self.clock.get_time()
 
-            self.rotation = (self.game.player.rect.topleft - self.position).angle_to(self.zero_degree_vector)
+                self.rect.center = self.position
 
-            self.acceleration = self.zero_degree_vector.rotate(-self.rotation)
-            self.avoid()
-            self.acceleration.scale_to_length(MOB_SPEED)
-            self.acceleration -= self.velocity
-            self.velocity += self.acceleration * self.game.tick
-            self.position += self.velocity * self.game.tick
+                self.acceleration = self.zero_degree_vector.rotate(-self.rotation)
+                self.avoid()
+                self.acceleration.scale_to_length(MOB_SPEED)
+                self.acceleration -= self.velocity
+                self.velocity += self.acceleration * self.game.tick
+                self.position += self.velocity * self.game.tick
 
-            self.collide(self.game.obstacles)
-            self.attack(self.game.player.rect.center)
+                self.collide(self.game.obstacles)
+                self.attack(self.game.player.rect.center)
 
         except ValueError:
             pass
@@ -292,3 +338,15 @@ class Obstacle(pygame.sprite.Sprite):
 
         self.rect = pygame.Rect(x, y, width, height)
         self.rect.topleft = x, y
+
+
+class Door(pygame.sprite.Sprite):
+    def __init__(self, x, y, width, height, index, game):
+        pygame.sprite.Sprite.__init__(self)
+        self.game = game
+
+        self.rect = pygame.Rect(x, y, width, height)
+        self.rect.topleft = x, y
+
+        self.level_index = index
+        self.activated = False

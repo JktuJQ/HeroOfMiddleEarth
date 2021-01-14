@@ -13,7 +13,10 @@ class Label(pygame.sprite.Sprite):
 
         self.screen = screen
 
-        self.image = font.render(text, True, font_color)
+        self.font = font
+        self.font_color = font_color
+
+        self.set_text(text)
         self.rect = self.image.get_rect()
 
         self.move_to(x, y)
@@ -23,6 +26,10 @@ class Label(pygame.sprite.Sprite):
 
     def move_to(self, x: int, y: int):
         self.rect.x, self.rect.y = x, y
+
+    def set_text(self, text: str):
+        self.image = self.font.render(text, True, self.font_color)
+        self.image.set_colorkey(pygame.color.Color("white"))
 
     def update(self):
         self.screen.blit(self.image, self.rect)
@@ -46,7 +53,8 @@ class Button(pygame.sprite.Sprite):
         self.texture = Button.image
         self.rect = self.texture.get_rect()
 
-        self.label = Label(screen, x, y, text, pygame.font.SysFont("magneto", 25), 25, font_color=pygame.color.Color("white"))
+        self.label = Label(self.screen, x, y, text, load_data("magneto_font.ttf", size=25), 25,
+                           font_color=pygame.color.Color("black"))
 
         self.move_to(x, y)
 

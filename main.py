@@ -1,4 +1,3 @@
-from constants import *
 from screens import *
 
 
