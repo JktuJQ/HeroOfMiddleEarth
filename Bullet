@@ -1,0 +1,46 @@
+class Weapon:
+    def __init__(self, kind, target_group, player):
+        from random import randrange
+        self.kind = kind
+        self.player = player
+        self.target_group = target_group
+
+        self.cooldown = INVENTORY_PROP[kind]['cooldown']
+        self.cooldown_tracker = 0
+
+        if type(player) == Mob:
+            self.cooldown *= 1.5
+            self.cooldown_tracker = randrange(self.cooldown)
+
+    def attack(self, pos):
+        if self.cooldown_tracker >= self.cooldown:
+            Bullet(self.player.rect.x + 15, self.player.rect.y + 15, pos[0], pos[1],
+                   self.kind, self, self.target_group)
+            self.cooldown_tracker = 0
+
+
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self, x, y, x1, y1, kind, weapon, target_group):
+        import math
+        pygame.sprite.Sprite.__init__(self, weapon.player.game.sprites)
+        self.style = INVENTORY_PROP[kind]['type of shooting']
+        self.dist = INVENTORY_PROP[kind]['range']
+        self.damage = INVENTORY_PROP[kind]['damage']
+        self.target_group = target_group
+        self.y = y
+        self.x = x
+        self.kind = kind
+        self.weapon = weapon
+        self.game = weapon.player.game
+        self.cam_pos = self.game.camera.camera.topleft
+        self.mouse_x = int(x1)
+        self.mouse_y = int(y1)
+        self.c = 0
+        self.speed = 6
+        self.being_in_the_list = 0
+        if self.style == 'line':
+            try:
+                self.image = pygame.transform.rotate(INVENTORY_PROP[kind]['animation'],
+                                                     self.weapon.player.rotation - 90)
+            except Exception:
+                self.image = INVENTORY_PROP[kind]['animation']
