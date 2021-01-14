@@ -33,6 +33,7 @@ class Level:
     def __init__(self, index, game):
         pygame.init()
         pygame.display.set_caption("Hero of MiddleEarth")
+
         self.index = index
         self.game = game
 
@@ -54,7 +55,7 @@ class Level:
         self.screen.blit(self.full_map, self.camera.apply_map(self.map_rect))
         for sprite in self.sprites:
             self.screen.blit(sprite.image, self.camera.apply(sprite))
-        pygame.display.flip()
+        #pygame.display.flip()
 
     def setup(self):
         self.load_map()
@@ -77,6 +78,8 @@ class Game:
 
     def pause(self):
         self.paused = True
+        pygame.mixer.music.pause()
+
         self.pause_menu = LoadingBar(self.current_level.screen, 600, 100, load_data("background_pause_menu.png"),
                                      self.pause_widgets)
         self.unpause_button = Button(self.current_level.screen, "Continue", 710, 250, self.unpause, self.pause_widgets,
@@ -87,6 +90,7 @@ class Game:
                                   text_offset=(65, 25))
 
     def unpause(self):
+        pygame.mixer.music.unpause()
         self.paused = False
 
     def menu(self):
@@ -103,6 +107,11 @@ class Game:
 
     def setup(self, index):
         self.current_level = Level(index, self)
+
+        from random import choice
+        pygame.mixer.music.load(os.path.join("data", choice(["game_theme1.mid", "game_theme2.mid"])))
+        pygame.mixer.music.play()
+
         self.background_hp_bar = LoadingBar(self.current_level.screen, 0, 850, load_data("background_hp_bar.png"),
                                             self.hud_widgets)
         self.hp_bar = LoadingBar(self.current_level.screen, 0, 850, load_data("hp_bar.png"), self.hud_widgets,
