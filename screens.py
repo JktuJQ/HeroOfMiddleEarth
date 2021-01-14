@@ -11,7 +11,6 @@ class Menu:
     """
 
     def __init__(self):
-        pygame.mixer.music.set_volume(0.5)
         pygame.mixer.music.load(os.path.join("data", "main_theme.mid"))
         pygame.mixer.music.play()
 
@@ -95,15 +94,18 @@ class Menu:
                         self.terminate()
                     if not self.loading:
                         if event.type == pygame.MOUSEMOTION:
-                            self.buttons.update(command="choose", x=event.pos[0], y=event.pos[1])
+                            for button in self.buttons:
+                                button.update(command="choose", x=event.pos[0], y=event.pos[1])
 
                         elif event.type == pygame.MOUSEBUTTONDOWN:
                             if event.button == 1:
-                                self.buttons.update(command="clicked", x=event.pos[0], y=event.pos[1])
+                                for button in self.buttons:
+                                    button.update(command="clicked", x=event.pos[0], y=event.pos[1])
                     if not self.loading:
                         self.labels.draw(self.screen)
                         self.buttons.draw(self.screen)
-                        self.buttons.update(command="render_text")
+                        for button in self.buttons:
+                            button.update(command="render_text")
                         pygame.display.flip()
                 if self.loading:
                     self.loading_widgets.draw(self.screen)

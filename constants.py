@@ -38,7 +38,7 @@ PLAYER_IMAGE = pygame.image.load('block/Player/Mag/Stay/mag_stay.png')
 PLAYER_IMAGE.set_colorkey((255, 255, 255))
 MOB_IMAGE = pygame.image.load('data/player.png')
 
-LEVELS = ['level_0.tmx']
+LEVELS = ['level_0.tmx', 'level_1.tmx', 'level_2.tmx']
 
 INVENTORY_PROP = {'gun': {'type of shooting': 'line', 'range': 200, 'damage': 20,
                           'animation': bullet_animation("data/bullet.png"),

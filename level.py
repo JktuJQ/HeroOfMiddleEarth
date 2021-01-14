@@ -107,10 +107,10 @@ class Game:
 
     def pause(self):
         """Pauses game"""
+        self.pause_widgets = pygame.sprite.Group()
         self.paused = True
         pygame.mixer.music.pause()
 
-        self.pause_widgets = pygame.sprite.Group()
         self.pause_menu = LoadingBar(self.current_level.screen, 600, 100, load_data("background_pause_menu.png"),
                                      self.pause_widgets)
         self.paused_label = Label(self.current_level.screen, 710, 130, "Paused!", load_data("title_font.ttf", size=35),
@@ -148,7 +148,6 @@ class Game:
         self.current_level = Level(index, self)
 
         from random import choice
-        pygame.mixer.music.set_volume(0.5)
         pygame.mixer.music.load(os.path.join("data", choice(["game_theme1.mid", "game_theme2.mid"])))
         pygame.mixer.music.play()
 
@@ -171,14 +170,15 @@ class Game:
 
     def update(self):
         """Updates levels, widgets and musics"""
-        if self.current_level.wave_index < 1:
-            if not self.current_level.mobs.sprites():
+        if not self.current_level.mobs.sprites():
+            self.current_level.wave_index += 1
+            if self.current_level.wave_index <= 1:
                 self.current_level.respawn_mobs()
-                self.current_level.wave_index += 1
-                self.status_label.set_text(f"Tips: Wave {self.current_level.wave_index + 1} has started")
+        if self.current_level.wave_index <= 1:
+            self.status_label.set_text(f"Tips: Wave {self.current_level.wave_index + 1} has started")
         else:
             self.current_level.door.activated = True
-            self.status_label.set_text("Tips: Find portal to other level")
+            self.status_label.set_text("Tips: Find the way out")
             pygame.mixer.music.fadeout(5000)
         self.current_level.sprites.update()
         self.current_level.camera.update(self.current_level.player)

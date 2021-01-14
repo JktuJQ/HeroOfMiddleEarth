@@ -67,7 +67,6 @@ class Player(pygame.sprite.Sprite):
 
     def get_damage(self, damage):
         """Gets damage and loses health points"""
-        pygame.mixer.Sound(os.path.join("data", "hurt.wav")).play()
         self.health_points -= damage
         if self.health_points <= 0:
             self.kill()
@@ -94,8 +93,11 @@ class Player(pygame.sprite.Sprite):
                 self.y = hits_list[0].rect.bottom
             self.y_speed = 0
             self.rect.y = self.y
-        if self.game.door.activated:
-            self.game.game.set_level(self.game.door.level_index)
+        if self.game.door.activated and pygame.rect.Rect.colliderect(self.rect, self.game.door):
+            if self.game.door.level_index == 3:
+                self.get_damage(self.health_points)
+            else:
+                self.game.game.set_level(self.game.door.level_index)
 
     def update(self):
         """Updates player stats"""
@@ -142,7 +144,6 @@ class Weapon:
     def attack(self, pos):
         """Performs attack with weapon"""
         if self.cooldown_tracker >= self.cooldown:
-            pygame.mixer.Sound(os.path.join("data", "shoot.wav")).play()
             Bullet(self.player.rect.x + 15, self.player.rect.y + 15, pos[0], pos[1],
                    self.kind, self, self.target_group)
             self.cooldown_tracker = 0
@@ -392,5 +393,5 @@ class Door(pygame.sprite.Sprite):
         self.rect = pygame.Rect(x, y, width, height)
         self.rect.topleft = x, y
 
-        self.level_index = index
-        self.activated = False
+        self.level_index = int(index)
+        self.activated = True
