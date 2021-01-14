@@ -2,6 +2,8 @@ from constants import *
 
 
 class Player(pygame.sprite.Sprite):
+    """Player class that inherits from pygame.sprite.Sprite"""
+
     def __init__(self, x, y, game):
         pygame.sprite.Sprite.__init__(self, game.sprites, game.players)
         self.image = PLAYER_IMAGE
@@ -21,49 +23,57 @@ class Player(pygame.sprite.Sprite):
         self.current_weapon = self.inventory[0]
 
     def draw_left(self):
+        """Animation to left"""
         if self.draw >= 20:
             self.draw = 0
         self.image = LEFT_HERO[self.draw // 5]
         self.draw += 1
 
     def draw_right(self):
+        """Animation to right"""
         if self.draw >= 20:
             self.draw = 0
         self.image = RIGHT_HERO[self.draw // 5]
         self.draw += 1
 
     def draw_down(self):
+        """Animation to down"""
         if self.draw >= 20:
             self.draw = 0
         self.image = DOWN_HERO[self.draw // 5]
         self.draw += 1
 
     def draw_top(self):
+        """Animation to top"""
         if self.draw >= 20:
             self.draw = 0
         self.image = TOP_HERO[self.draw // 5]
         self.draw += 1
 
     def add_weapon(self, weapon_kind):
+        """Adds weapon to player inventory"""
         if len(self.inventory) <= 8 and weapon_kind not in [weapon.kind for weapon in self.inventory]:
             self.inventory.append(Weapon(weapon_kind, self.target_group, self))
 
     def choose_weapon(self, index):
+        """Chooses weapon from inventory"""
         if -1 < index < len(self.inventory):
             self.current_weapon = self.inventory[index]
 
     def attack(self, pos):
+        """Attacks at pos"""
         if self.current_weapon:
             self.current_weapon.attack(pos)
 
     def get_damage(self, damage):
+        """Gets damage and loses health points"""
         self.health_points -= damage
         if self.health_points <= 0:
-            self.game.running = False
             self.kill()
             self.game.game.game_over()
 
     def collide(self, groups):
+        """Checks collision"""
         self.rect.x = self.x
         hits_list = pygame.sprite.spritecollide(self, groups, False)
         if hits_list:
@@ -87,6 +97,7 @@ class Player(pygame.sprite.Sprite):
             self.game.game.set_level(self.game.door.level_index)
 
     def update(self):
+        """Updates player stats"""
         if self.x_speed > 0:
             self.x += self.x_speed * self.game.tick * 0.7
             self.draw_right()
@@ -110,6 +121,10 @@ class Player(pygame.sprite.Sprite):
 
 
 class Weapon:
+    """
+    Weapon class that implements weapon range, cooldown and damage
+    """
+
     def __init__(self, kind, target_group, player):
         from random import randrange
         self.kind = kind
@@ -124,6 +139,7 @@ class Weapon:
             self.cooldown_tracker = randrange(self.cooldown)
 
     def attack(self, pos):
+        """Performs attack with weapon"""
         if self.cooldown_tracker >= self.cooldown:
             Bullet(self.player.rect.x + 15, self.player.rect.y + 15, pos[0], pos[1],
                    self.kind, self, self.target_group)
@@ -131,6 +147,10 @@ class Weapon:
 
 
 class Bullet(pygame.sprite.Sprite):
+    """
+    Bullet class
+    """
+
     def __init__(self, x, y, x1, y1, kind, weapon, target_group):
         import math
         import pyganim
@@ -175,6 +195,7 @@ class Bullet(pygame.sprite.Sprite):
         self.update()
 
     def update(self):
+        """Updates bullet"""
         if self.style == 'line':
             try:
                 self.rect.x = self.list_of_line_coordinates[self.being_in_the_list][0]
@@ -186,6 +207,7 @@ class Bullet(pygame.sprite.Sprite):
                 self.kill()
 
     def collide(self, target_group, collision_group):
+        """Checks collision"""
         if pygame.sprite.spritecollide(self, collision_group, False):
             self.kill()
         targets_hits = pygame.sprite.spritecollide(self, target_group, False)
@@ -195,6 +217,7 @@ class Bullet(pygame.sprite.Sprite):
             self.kill()
 
     def get_line(self, x1, y1, x2, y2):
+        """Gets bullet trajectory"""
         points = []
         issteep = abs(y2 - y1) > abs(x2 - x1)
         if issteep:
@@ -229,6 +252,10 @@ class Bullet(pygame.sprite.Sprite):
 
 
 class Mob(pygame.sprite.Sprite):
+    """
+    Mob class that inherits from pygame.sprite.Sprite
+    """
+
     def __init__(self, x, y, type, game):
         pygame.sprite.Sprite.__init__(self, game.sprites, game.mobs)
         self.game = game
@@ -261,23 +288,28 @@ class Mob(pygame.sprite.Sprite):
         self.current_weapon = self.inventory[0]
 
     def add_weapon(self, weapon_kind):
+        """Adds weapon to mob"""
         if len(self.inventory) <= 8 and weapon_kind not in [weapon.kind for weapon in self.inventory]:
             self.inventory.append(Weapon(weapon_kind, self.target_group, self))
 
     def choose_weapon(self, index):
+        """Chooses mob's weapon"""
         if -1 < index < len(self.inventory):
             self.current_weapon = self.inventory[index]
 
     def attack(self, pos):
+        """Mob attacks"""
         if self.current_weapon:
             self.current_weapon.attack(pos)
 
     def get_damage(self, damage):
+        """Mob gets damage"""
         self.health_points -= damage
         if self.health_points <= 0:
             self.kill()
 
     def avoid(self):
+        """Avoids being on collision with other mobs"""
         for mob in self.game.mobs:
             if mob != self:
                 shift = self.position - mob.rect.center
@@ -285,6 +317,7 @@ class Mob(pygame.sprite.Sprite):
                     self.acceleration += shift.normalize()
 
     def collide(self, group):
+        """Checks collision"""
         self.rect.centerx = self.position.x
         hits_list = pygame.sprite.spritecollide(self, group, False, lambda a, b: a.rect.colliderect(b.rect))
         if hits_list:
@@ -306,6 +339,7 @@ class Mob(pygame.sprite.Sprite):
             self.rect.centery = self.position.y
 
     def update(self):
+        """Updates bullet stats"""
         try:
             to_player = self.game.player.rect.topleft - self.position
             if to_player.length() <= 1000:
@@ -332,6 +366,10 @@ class Mob(pygame.sprite.Sprite):
 
 
 class Obstacle(pygame.sprite.Sprite):
+    """
+    Obstacle base class
+    """
+
     def __init__(self, x, y, width, height, game):
         pygame.sprite.Sprite.__init__(self, game.obstacles)
         self.game = game
@@ -341,6 +379,10 @@ class Obstacle(pygame.sprite.Sprite):
 
 
 class Door(pygame.sprite.Sprite):
+    """
+    Door base class
+    """
+
     def __init__(self, x, y, width, height, index, game):
         pygame.sprite.Sprite.__init__(self)
         self.game = game

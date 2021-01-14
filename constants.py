@@ -1,5 +1,6 @@
 import sys
 import os
+
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 
@@ -83,11 +84,9 @@ MOBS = {'archer': {'type_gun': 'bow', 'hp': 50, 'speed': 130,
                                     bullet_animation("block/Player/Mobs/Warrior/warrior_run_l.png")]
                     }}
 
-
 TILE_SIZE = 32
 FPS = 60
 MAP_WIDTH = 100
 MAP_HEIGHT = 58
 WINDOW_SIZE = (WIDTH, HEIGHT)
 MAP_SIZE = (MAP_WIDTH * TILE_SIZE, MAP_HEIGHT * TILE_SIZE)
-
