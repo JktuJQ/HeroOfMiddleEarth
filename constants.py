@@ -1,8 +1,8 @@
+import pygame
 import sys
 import os
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
-import pygame
 
 
 # Functions
@@ -41,12 +41,13 @@ MOB_IMAGE = pygame.image.load('data/player.png')
 LEVELS = ['level_0.tmx', 'level_1.tmx', 'level_2.tmx']
 
 INVENTORY_PROP = {'gun': {'type of shooting': 'line', 'range': 200, 'damage': 20,
-                          'animation': bullet_animation("data/bullet.png"),
+                          'animation': bullet_animation("data/images/bullet.png"),
                           'cooldown': 500},
-                  'sword': {'type of shooting': 'circle', 'range': 50, 'damage': 50, 'cooldown': 500},
+                  'sword': {'type of shooting': 'circle', 'range': 50, 'damage': 50, 'cooldown': 500,
+                            'animation': bullet_animation("data/images/bullet.png")},
                   'bow': {'type of shooting': 'line', 'range': 250,
                           'damage': 40, 'cooldown': 1000,
-                          'animation': bullet_animation("data/bullet.png")}}
+                          'animation': bullet_animation("data/images/arrow.png")}}
 
 RIGHT_HERO = [bullet_animation("block/Player/Mag/Right/mag_right_s.png"),
               bullet_animation("block/Player/Mag/Right/mag_right_r.png"),
