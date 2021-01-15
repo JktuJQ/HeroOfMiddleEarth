@@ -1,8 +1,8 @@
+import os
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"  # Disables the pygame welcome message
+
 import pygame
 import sys
-import os
-
-os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 
 
 # Functions

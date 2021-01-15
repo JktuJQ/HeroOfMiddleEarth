@@ -1,6 +1,5 @@
 from random import randint
 
-from save import *
 from widgets import *
 
 
@@ -12,7 +11,7 @@ class Menu:
 
     def __init__(self):
         pygame.mixer.music.load(os.path.join("data", "main_theme.mid"))
-        pygame.mixer.music.play()
+        pygame.mixer.music.play(-1)
 
         self.running = False
 
@@ -31,10 +30,8 @@ class Menu:
                                  load_data("title_font.ttf", size=80), 100, self.labels)
 
         self.buttons = pygame.sprite.Group()
-        self.button_play = Button(self.screen, "New game", 50, 600, self.loading_play, self.buttons,
+        self.button_play = Button(self.screen, "New game", 50, 700, self.loading_play, self.buttons,
                                   text_offset=(20, 25))
-        self.button_play = Button(self.screen, "Load game", 50, 700, self.loading_load, self.buttons,
-                                  text_offset=(15, 25))
         self.button_exit = Button(self.screen, "Exit", 50, 800, self.terminate, self.buttons, text_offset=(65, 25))
 
         self.loading_widgets = pygame.sprite.Group()
@@ -52,10 +49,6 @@ class Menu:
         """Starts loading when pressed Play button"""
         self.start_loading(next=self.play)
 
-    def loading_load(self):
-        """Starts loading when pressed Load button"""
-        self.start_loading(next=self.load)
-
     def play(self):
         """Play function which is called after loading"""
         self.running = False
@@ -63,17 +56,7 @@ class Menu:
         pygame.quit()
         from level import Game
         game = Game()
-        save_data("game.level", 0, os.path.join("saves", "save"))
-        game.run(get_data("game.level", os.path.join("saves", "save")))
-
-    def load(self):
-        """Load function which is called after loading"""
-        self.running = False
-        self.loading = False
-        pygame.quit()
-        from level import Game
-        game = Game()
-        game.run(get_data("game.level", os.path.join("saves", "save")))
+        game.run(0)
 
     def terminate(self):
         """Kills game"""

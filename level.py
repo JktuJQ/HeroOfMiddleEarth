@@ -149,7 +149,7 @@ class Game:
 
         from random import choice
         pygame.mixer.music.load(os.path.join("data", choice(["game_theme1.mid", "game_theme2.mid"])))
-        pygame.mixer.music.play()
+        pygame.mixer.music.play(-1)
 
         self.background_hp_bar = LoadingBar(self.current_level.screen, 0, 850, load_data("background_hp_bar.png"),
                                             self.hud_widgets)
@@ -197,6 +197,12 @@ class Game:
         self.pause()
         self.paused_label.set_text("You lost!")
 
+    def win(self):
+        """Terminates game"""
+        self.lost = True
+        self.pause()
+        self.paused_label.set_text("You won!")
+
     def run(self, index):
         """Game mainloop"""
         try:
@@ -221,6 +227,7 @@ class Game:
                             if event.button == pygame.BUTTON_LEFT:
                                 for widget in self.pause_widgets:
                                     widget.update(command="clicked", x=event.pos[0], y=event.pos[1])
+
                 pressed_keys = pygame.key.get_pressed()
                 if not self.paused:
                     if pressed_keys[pygame.K_w]:
@@ -247,5 +254,5 @@ class Game:
                 pygame.display.flip()
 
             pygame.quit()
-        except pygame.error:
+        except Exception:
             pygame.quit()

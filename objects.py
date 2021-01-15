@@ -68,7 +68,10 @@ class Player(pygame.sprite.Sprite):
     def get_damage(self, damage):
         """Gets damage and loses health points"""
         self.health_points -= damage
+        pygame.mixer.Sound(os.path.join("data", "hurt.wav")).play()
         if self.health_points <= 0:
+            self.health_points = 0
+
             self.kill()
             self.game.game.game_over()
 
@@ -95,9 +98,8 @@ class Player(pygame.sprite.Sprite):
             self.rect.y = self.y
         if self.game.door.activated and pygame.rect.Rect.colliderect(self.rect, self.game.door):
             if self.game.door.level_index == 3:
-                self.get_damage(self.health_points)
+                self.game.game.win()
             else:
-                print(self.game.door.level_index)
                 self.game.game.set_level(self.game.door.level_index)
 
     def update(self):
@@ -145,6 +147,7 @@ class Weapon:
     def attack(self, pos):
         """Performs attack with weapon"""
         if self.cooldown_tracker >= self.cooldown:
+            pygame.mixer.Sound(os.path.join("data", "shoot.wav")).play()
             Bullet(self.player.rect.x + 15, self.player.rect.y + 15, pos[0], pos[1],
                    self.kind, self, self.target_group)
             self.cooldown_tracker = 0
@@ -385,7 +388,8 @@ class Mob(pygame.sprite.Sprite):
                 self.position += self.velocity * self.game.tick
 
                 self.collide(self.game.obstacles)
-                self.attack(self.game.player.rect.center)
+                if to_player.length() <= 250:
+                    self.attack(self.game.player.rect.center)
         except ValueError:
             pass
 
@@ -416,4 +420,4 @@ class Door(pygame.sprite.Sprite):
         self.rect.topleft = x, y
 
         self.level_index = int(index)
-        self.activated = False
+        self.activated = True

@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.4" tiledversion="1.4.3" orientation="orthogonal" renderorder="right-down" width="100" height="58" tilewidth="32" tileheight="32" infinite="0" nextlayerid="7" nextobjectid="57">
  <tileset firstgid="1" name="rpg_1" tilewidth="32" tileheight="32" tilecount="341" columns="11">
-  <image source="../../hero_of_middleearth/data/ApplicationFrameHost_eG8xADEEsP.png" trans="082152" width="362" height="1023"/>
+  <image source="ApplicationFrameHost_eG8xADEEsP.png" trans="082152" width="362" height="1023"/>
  </tileset>
  <tileset firstgid="342" name="rpg_2" tilewidth="32" tileheight="32" tilecount="256" columns="8">
-  <image source="../../hero_of_middleearth/data/ApplicationFrameHost_lak6YWEOkI.png" trans="082152" width="256" height="1024"/>
+  <image source="ApplicationFrameHost_lak6YWEOkI.png" trans="082152" width="256" height="1024"/>
  </tileset>
  <tileset firstgid="598" name="rpg_3" tilewidth="32" tileheight="32" tilecount="256" columns="8">
-  <image source="../../hero_of_middleearth/data/ApplicationFrameHost_MnJaDrYLsa.png" trans="082152" width="256" height="1024"/>
+  <image source="ApplicationFrameHost_MnJaDrYLsa.png" trans="082152" width="256" height="1024"/>
  </tileset>
  <tileset firstgid="854" name="rpg_4" tilewidth="32" tileheight="32" tilecount="256" columns="8">
-  <image source="../../hero_of_middleearth/data/ApplicationFrameHost_X5XUhAqrwZ.png" trans="082152" width="256" height="1024"/>
+  <image source="ApplicationFrameHost_X5XUhAqrwZ.png" trans="082152" width="256" height="1024"/>
  </tileset>
  <tileset firstgid="1110" name="5z1KX" tilewidth="32" tileheight="32" tilecount="483" columns="23">
-  <image source="../../hero_of_middleearth/data/5z1KX.png" width="736" height="672"/>
+  <image source="5z1KX.png" width="736" height="672"/>
  </tileset>
  <layer id="1" name="floor" width="100" height="58">
   <data encoding="csv">
