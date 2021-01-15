@@ -420,4 +420,4 @@ class Door(pygame.sprite.Sprite):
         self.rect.topleft = x, y
 
         self.level_index = int(index)
-        self.activated = True
+        self.activated = False
