@@ -420,4 +420,4 @@ class Door(pygame.sprite.Sprite):
         self.rect.topleft = x, y
 
         self.level_index = int(index)
-        self.activated = False
+        self.activated = False  # Switch to True to skip all levels
