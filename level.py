@@ -246,7 +246,8 @@ class Game:
                 if self.paused:
                     self.pause_widgets.draw(self.current_level.screen)
                     try:
-                        self.unpause_button.update(command="render_text")
+                        if self.unpause_button in self.pause_widgets:
+                            self.unpause_button.update(command="render_text")
                     except AttributeError:
                         pass
                     self.menu_button.update(command="render_text")
